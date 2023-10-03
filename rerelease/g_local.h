@@ -2355,6 +2355,7 @@ void G_UnLagCompensate();
 // p_hud.c
 //
 void MoveClientToIntermission(edict_t *client);
+void RestoreClientFromIntermission(edict_t* ent);
 void G_SetStats(edict_t *ent);
 void G_SetCoopStats(edict_t *ent);
 void G_SetSpectatorStats(edict_t *ent);
@@ -2962,6 +2963,12 @@ struct edict_t
 	solid_t	   solid;
 	contents_t clipmask;
 	edict_t	   *owner;
+
+
+
+	
+	
+	
 
 	//================================
 

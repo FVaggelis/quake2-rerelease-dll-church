@@ -1105,34 +1105,272 @@ constexpr size_t HACKFLAG_TELEPORT_OUT = 2;
 constexpr size_t HACKFLAG_SKIPPABLE = 64;
 constexpr size_t HACKFLAG_END_OF_UNIT = 128;
 
+constexpr spawnflags_t SPAWNFLAG_SKIPPABLE = 1_spawnflag;
+constexpr spawnflags_t SPAWNFLAG_NORESTORE = 2_spawnflag;
+constexpr spawnflags_t SPAWNFLAG_CLEARDATA = 4_spawnflag;
+
+
+std::vector<edict_t*> dummies;
+std::vector<edict_t*> pClients;
+std::vector<gvec3_t> origins;
+std::vector<gvec3_t> viewAngles;
+std::vector<int32_t> gunIndexes;
+gtime_t startTime;
+
+void clearVectors()
+{
+	dummies.clear();
+	pClients.clear();
+	origins.clear();
+	viewAngles.clear();
+	gunIndexes.clear();
+}
+
+void printTest(std::string base)
+{
+
+	const char* combinedString = base.c_str();
+	
+
+	for (uint32_t i = 0; i < game.maxclients; i++)
+	{
+		edict_t* client = g_edicts + 1 + i;
+		if (!client->inuse)
+		{
+			continue;
+		}
+		//gi.LocCenter_Print(client, std::to_string(client->s.modelindex).c_str());
+		gi.LocCenter_Print(client, combinedString);
+	}
+}
+// Function to calculate the shortest angular difference between two angles
+float ShortestAngularDifference(float from, float to) {
+	float diff = to - from;
+	if (diff > 180.0f) {
+		return diff - 360.0f;
+	}
+	if (diff < -180.0f) {
+		return diff + 360.0f;
+	}
+	return diff;
+}
+
+// Function to perform slerp between two angles
+float SlerpAngle(float from, float to, float t) {
+	// Ensure the angles are in the range [0, 360)
+	from = fmodf(from, 360.0f);
+	to = fmodf(to, 360.0f);
+
+	// Calculate the shortest angular difference
+	float diff = ShortestAngularDifference(from, to);
+
+	// Interpolate the angular difference
+	return from + t * diff;
+}
+
+vec3_t slerpCamera(const vec3_t& from, const vec3_t& to, float t)
+{
+	float interpYaw = SlerpAngle(from[YAW], to[YAW], t);
+	float interpPitch = SlerpAngle(from[PITCH], to[PITCH], t);
+
+	vec3_t interpolatedCamera;
+	interpolatedCamera[YAW] = interpYaw;
+	interpolatedCamera[PITCH] = interpPitch;
+	interpolatedCamera[ROLL] = 0.0f;  // Assuming no roll for a typical camera
+
+	return interpolatedCamera;
+}
+static void camera_turnat_pathtarget(edict_t* self, vec3_t origin, vec3_t* dest)
+{
+	
+	if (self->pathtarget)
+	{
+		edict_t* pt = nullptr;
+		pt = G_FindByString<&edict_t::targetname>(pt, self->pathtarget);
+		if (pt)
+		{
+			vec3_t to;
+			vec3_t delta = pt->s.origin - self->s.origin;
+
+			float d = delta.dot(delta);
+
+			if (d == 0.0f)
+			{
+				to[YAW] = 0.0f;
+				to[PITCH] = -((delta[2] > 0.0f) ? 90.0f : -90.0f);
+				to[ROLL] = 0.0f;
+			}
+			else
+			{
+				to[YAW] = (atan2(delta[1], delta[0]) * (180.0f / PIf));
+				to[PITCH] = -(atan2(delta[2], sqrt(d)) * (180.0f / PIf));
+				to[ROLL] = 0.0f;
+			}
+			
+
+			
+			float lerpspeed = self->speed * 0.0002;
+			if (lerpspeed > 0.1) lerpspeed = 0.1f;
+			//+ " from P: " + std::to_string((*dest)[PITCH]) + " to P: " + std::to_string(to[PITCH])
+			//printTest("from Y: "+std::to_string((*dest)[YAW])+" to Y: "+std::to_string(to[YAW]));
+
+			(*dest) = slerpCamera((*dest), to, lerpspeed);
+			
+			//(*dest)[YAW] = yaw;
+			///(*dest)[PITCH] = -pitch;
+			//(*dest)[ROLL] = 0;
+
+			// is yaw or is pitch, why is pitch -
+		}
+	}
+}
 static void camera_lookat_pathtarget(edict_t* self, vec3_t origin, vec3_t* dest)
 {
+	
     if(self->pathtarget)
     {
         edict_t* pt = nullptr;
         pt = G_FindByString<&edict_t::targetname>(pt, self->pathtarget);
         if(pt)
         {
-            float yaw, pitch;
-            vec3_t delta = pt->s.origin - origin;
+			vec3_t to;
+			vec3_t delta = pt->s.origin - self->s.origin;
 
-            float d = delta[0] * delta[0] + delta[1] * delta[1];
-            if(d == 0.0f)
-            {
-                yaw = 0.0f;
-                pitch = (delta[2] > 0.0f) ? 90.0f : -90.0f;
-            }
-            else
-            {
-                yaw = atan2(delta[1], delta[0]) * (180.0f / PIf);
-                pitch = atan2(delta[2], sqrt(d)) * (180.0f / PIf);
-            }
+			float d = delta.dot(delta);
 
-            (*dest)[YAW] = yaw;
-            (*dest)[PITCH] = -pitch;
-            (*dest)[ROLL] = 0;
+			if (d == 0.0f)
+			{
+				to[YAW] = 0.0f;
+				to[PITCH] = -((delta[2] > 0.0f) ? 90.0f : -90.0f);
+				to[ROLL] = 0.0f;
+			}
+			else
+			{
+				to[YAW] = (atan2(delta[1], delta[0]) * (180.0f / PIf));
+				to[PITCH] = -(atan2(delta[2], sqrt(d)) * (180.0f / PIf));
+				to[ROLL] = 0.0f;
+			}
+
+			(*dest) = to;
+
         }
     }
+}
+void G_SetClientFrame(edict_t* ent);
+
+extern float xyspeed;
+THINK(target_camera_dummy_think) (edict_t* self) -> void
+{
+	// bit of a hack, but this will let the dummy
+	// move like a player
+	self->client = self->owner->client;
+	xyspeed = sqrtf(self->velocity[0] * self->velocity[0] + self->velocity[1] * self->velocity[1]);
+	G_SetClientFrame(self);
+	self->client = nullptr;
+
+	// alpha fade out for voops
+	if (self->hackflags & HACKFLAG_TELEPORT_OUT)
+	{
+		self->timestamp = max(0_ms, self->timestamp - 10_hz);
+		self->s.alpha = max(1.f / 255.f, (self->timestamp.seconds() / self->pain_debounce_time.seconds()));
+	}
+
+	self->nextthink = level.time + 10_hz;
+}
+void storeClient(edict_t* self, edict_t* client)
+{
+	if (client->health <= 0)respawn(client);
+	origins.push_back(client->s.origin);
+	viewAngles.push_back(client->client->ps.viewangles);
+	gunIndexes.push_back(client->client->ps.gunindex);
+	
+	client->flags |= FL_NOTARGET;
+	client->flags |= FL_GODMODE;
+	//client->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_HIDE_HUD;
+	//client->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_HIDE_CROSSHAIR;
+
+
+	pClients.push_back(client);
+	
+	//printTest(std::to_string(self->pClients.size()));
+
+
+}
+void moveCamera(edict_t* self, edict_t* client)
+{
+
+	client->s.origin = level.intermission_origin;
+	client->client->ps.pmove.origin = level.intermission_origin;
+	client->client->ps.viewangles = level.intermission_angle;
+	client->client->ps.pmove.pm_type = PM_FREEZE;
+	client->movetype = MOVETYPE_NOCLIP;
+	client->client->ps.gunindex = 0;
+	client->client->ps.gunrate = -1;
+	client->s.modelindex = 0;
+	client->s.modelindex2 = 0;
+	client->viewheight = 0;
+	client->client->showinventory = false;
+	client->client->showhelp = false;
+}
+void restoreClients(edict_t* self)
+{
+	
+	for (size_t i = 0; i < pClients.size(); i++)
+	{
+
+
+		edict_t* client = pClients[i];
+
+		client->s.origin = origins[i];
+		client->client->ps.pmove.origin = origins[i];
+		client->client->ps.viewangles = viewAngles[i];
+		client->client->ps.pmove.pm_type = PM_NORMAL;
+		client->movetype = MOVETYPE_WALK;
+		client->client->ps.gunindex = gunIndexes[i];
+		client->s.modelindex = 255;
+		client->s.modelindex2 = 255;
+		client->viewheight = 22;
+		client->flags &= ~FL_NOTARGET;
+		client->flags &= ~FL_GODMODE;
+		//client->client->ps.stats[STAT_LAYOUTS] &= ~LAYOUTS_HIDE_HUD;
+		//->client->ps.stats[STAT_LAYOUTS] &= ~LAYOUTS_HIDE_CROSSHAIR;
+
+	
+
+	}
+}
+
+void createDummy(edict_t* self, edict_t* client)
+{
+	edict_t* dummy = self->enemy = G_Spawn();
+	dummy->owner = client;
+	dummy->clipmask = client->clipmask;
+	dummy->s.origin = client->s.origin;
+	dummy->s.angles = client->s.angles;
+	dummy->groundentity = client->groundentity;
+	dummy->groundentity_linkcount = dummy->groundentity ? dummy->groundentity->linkcount : 0;
+	dummy->think = target_camera_dummy_think;
+	dummy->nextthink = level.time + 10_hz;
+	dummy->solid = SOLID_BBOX;
+	dummy->movetype = MOVETYPE_STEP;
+	dummy->mins = client->mins;
+	dummy->maxs = client->maxs;
+	dummy->s.modelindex = dummy->s.modelindex2 = MODELINDEX_PLAYER;
+	dummy->s.skinnum = client->s.skinnum;
+	dummy->velocity = client->velocity;
+	dummy->s.renderfx = RF_MINLIGHT;
+	dummy->s.frame = client->s.frame;
+	gi.linkentity(dummy);
+	dummies.push_back(dummy);
+}
+
+void destroyDummies(edict_t* self)
+{
+	for (size_t i = 0; i < dummies.size(); i++) {
+		edict_t* item = dummies[i];
+		G_FreeEdict(item);
+	}
+	dummies.clear(); // Clear the vector after deleting all elements.
 }
 
 THINK(update_target_camera) (edict_t *self) -> void
@@ -1140,7 +1378,8 @@ THINK(update_target_camera) (edict_t *self) -> void
 	bool do_skip = false;
 
 	// only allow skipping after 2 seconds
-	if ((self->hackflags & HACKFLAG_SKIPPABLE) && level.time > 2_sec)
+	//(self->hackflags & HACKFLAG_SKIPPABLE)
+	if (self->spawnflags.has(SPAWNFLAG_SKIPPABLE) && (level.time - startTime) > 2_sec)
 	{
         for (uint32_t i = 0; i < game.maxclients; i++)
         {
@@ -1160,9 +1399,9 @@ THINK(update_target_camera) (edict_t *self) -> void
     {
 		self->moveinfo.remaining_distance -= (self->moveinfo.move_speed * gi.frame_time_s) * 0.8f;
 
-		if(self->moveinfo.remaining_distance <= 0)
-        {
-			if (self->movetarget->hackflags & HACKFLAG_TELEPORT_OUT)
+		if (self->moveinfo.remaining_distance <= 0)
+		{
+			/*if (self->movetarget->hackflags & HACKFLAG_TELEPORT_OUT)
 			{
 				if (self->enemy)
 				{
@@ -1170,41 +1409,95 @@ THINK(update_target_camera) (edict_t *self) -> void
 					self->enemy->hackflags = HACKFLAG_TELEPORT_OUT;
 					self->enemy->pain_debounce_time = self->enemy->timestamp = gtime_t::from_sec(self->movetarget->wait);
 				}
+			}*/
+			
+			
+			
+			if (self->movetarget->pathtarget)
+			{
+				edict_t* temp = G_PickTarget(self->movetarget->pathtarget);
+				if (temp)self->pathtarget = self->movetarget->pathtarget;
+				
 			}
-
-            self->s.origin = self->movetarget->s.origin;
-            self->nextthink = level.time + gtime_t::from_sec(self->movetarget->wait);
+			
+			self->s.origin = self->movetarget->s.origin;
+			self->nextthink = level.time + gtime_t::from_sec(self->movetarget->wait);
 			if (self->movetarget->target)
 			{
 				self->movetarget = G_PickTarget(self->movetarget->target);
 
 				if (self->movetarget)
-				{
-					self->moveinfo.move_speed = self->movetarget->speed ? self->movetarget->speed : 55;
+				{	
+					
+
+
+
+					self->moveinfo.move_speed = self->movetarget->speed ? self->movetarget->speed : self->speed;
 					self->moveinfo.remaining_distance = (self->movetarget->s.origin - self->s.origin).normalize();
 					self->moveinfo.distance = self->moveinfo.remaining_distance;
+
+
+	
+
+
 				}
 			}
 			else
+			{ 
+				
 				self->movetarget = nullptr;
+			
+			}
+			
+			for (uint32_t i = 0; i < game.maxclients; i++)
+			{
+				edict_t* client = g_edicts + 1 + i;
+				if (!client->inuse)
+				{
+					continue;
+				}
+				bool hasClient = false;
+				for (size_t i = 0; i < pClients.size(); i++)
+					if (pClients[i] == client)
+					{
+						hasClient = true;
+						break;
+					}
+				if (!hasClient)
+				{
+					storeClient(self, client);
+					createDummy(self, client);
+					printTest("it stored again up");
+				}
+				moveCamera(self, client);
 
-            return;
+			}
+
+
+			return;
+
+
+            
         }
         else
         {
-            float frac = 1.0f - (self->moveinfo.remaining_distance / self->moveinfo.distance);
+			//
+			if(self->movetarget)
+			{ 
+				float frac = 1.0f - (self->moveinfo.remaining_distance / self->moveinfo.distance);
 
-			if (self->enemy && (self->enemy->hackflags & HACKFLAG_TELEPORT_OUT))
-				self->enemy->s.alpha = max(1.f / 255.f, frac);
+				//if (self->enemy && (self->enemy->hackflags & HACKFLAG_TELEPORT_OUT))
+				//	self->enemy->s.alpha = max(1.f / 255.f, frac);
 
-            vec3_t delta = self->movetarget->s.origin - self->s.origin;
-            delta *= frac;
-            vec3_t newpos = self->s.origin + delta;
+				vec3_t delta = self->movetarget->s.origin - self->s.origin;
+				delta *= frac;
+				vec3_t newpos = self->s.origin + delta;
 
-            camera_lookat_pathtarget(self, newpos, &level.intermission_angle);
-			level.intermission_origin = newpos;
+				camera_turnat_pathtarget(self, newpos, &level.intermission_angle);
+				level.intermission_origin = newpos;
+			}
 
-            // move all clients to the intermission point
+			// move the clients like cameras
             for (uint32_t i = 0; i < game.maxclients; i++)
             {
                 edict_t* client = g_edicts + 1 + i;
@@ -1212,36 +1505,110 @@ THINK(update_target_camera) (edict_t *self) -> void
                 {
                     continue;
                 }
+				bool hasClient = false;
+				for (size_t i = 0; i < pClients.size(); i++)
+					if (pClients[i] == client)
+					{
+						hasClient = true;
+						break;
+					}
+				if(!hasClient)
+				{ 
+					storeClient(self, client);
+					createDummy(self, client);
+				}
+				moveCamera(self, client);
 
-                MoveClientToIntermission(client);
+				
+
+
+				//client->client->ps.stats[STAT_HEALTH] = 0;
+				
+				//client->client->ps.gunindex = 0;
+				
+				//client->client->ps.gunskin = 0;
             }
         }
     }
     else
     {
+
 		if (self->killtarget)
         {
-			// destroy dummy player
-			if (self->enemy)
-				G_FreeEdict(self->enemy);
-
             edict_t* t = nullptr;
-            level.intermissiontime = 0_ms;
-			level.level_intermission_set = true;
+			bool hasCamera = false;
 
 			while ((t = G_FindByString<&edict_t::targetname>(t, self->killtarget)))
             {
-                t->use(t, self, self->activator);
+				if (t->classname == "target_camera")hasCamera = true;
+				t->use(t, self, self->activator);
             }
+			
+			if (!hasCamera)
+			{
+				if (!self->spawnflags.has(SPAWNFLAG_NORESTORE))
+				{
+					level.story_active = false;
+					destroyDummies(self);
+					restoreClients(self);
+				}
+				else
+				{
+					for (uint32_t i = 0; i < game.maxclients; i++)
+					{
 
-            level.intermissiontime = level.time;
-			level.intermission_server_frame = gi.ServerFrame();
+						edict_t* client = g_edicts + 1 + i;
+						bool hasClient = false;
+						for (size_t i = 0; i < pClients.size(); i++)
+							if (pClients[i] == client)
+							{
+								hasClient = true;
+								break;
+							}
+						if (!hasClient)
+						{
+							continue;
+						}
+						moveCamera(self, client);
+					}
+				}
+					
+				clearVectors();
 
-			// end of unit requires a wait
-			if (level.changemap && !strchr(level.changemap, '*'))
-				level.exitintermission = true;
+			}
+
         }
+		else
+		{
+			level.story_active = false;
+			if (!self->spawnflags.has(SPAWNFLAG_NORESTORE))
+			{
+				destroyDummies(self);
+				restoreClients(self);
+			}
+			else
+			{
+				for (uint32_t i = 0; i < game.maxclients; i++)
+				{
+					edict_t* client = g_edicts + 1 + i;
+					bool hasClient = false;
+					for (size_t i = 0; i < pClients.size(); i++)
+						if (pClients[i] == client)
+						{
+							hasClient = true;
+							break;
+						}
+					if (!hasClient)
+					{
+						continue;
+					}
+					moveCamera(self, client);
+				}
+			}
+			clearVectors();
+		}
 
+		G_FreeEdict(self);
         self->think = nullptr;
         return;
     }
@@ -1249,31 +1616,12 @@ THINK(update_target_camera) (edict_t *self) -> void
     self->nextthink = level.time + FRAME_TIME_S;
 }
 
-void G_SetClientFrame(edict_t *ent);
 
-extern float xyspeed;
 
-THINK(target_camera_dummy_think) (edict_t *self) -> void
-{
-	// bit of a hack, but this will let the dummy
-	// move like a player
-	self->client = self->owner->client;
-	xyspeed = sqrtf(self->velocity[0] * self->velocity[0] + self->velocity[1] * self->velocity[1]);
-	G_SetClientFrame(self);
-	self->client = nullptr;
 
-	// alpha fade out for voops
-	if (self->hackflags & HACKFLAG_TELEPORT_OUT)
-	{
-		self->timestamp = max(0_ms, self->timestamp - 10_hz);
-		self->s.alpha = max(1.f / 255.f, (self->timestamp.seconds() / self->pain_debounce_time.seconds()));
-	}
-
-	self->nextthink = level.time + 10_hz;
-}
 
 USE(use_target_camera) (edict_t *self, edict_t *other, edict_t *activator) -> void
-{
+{	
 	if (self->sounds)
 		gi.configstring (CS_CDTRACK, G_Fmt("{}", self->sounds).data() );
 
@@ -1284,39 +1632,33 @@ USE(use_target_camera) (edict_t *self, edict_t *other, edict_t *activator) -> vo
 
     if (!self->movetarget)
         return;
-
-    level.intermissiontime = level.time;
-	level.intermission_server_frame = gi.ServerFrame();
-    level.exitintermission = 0;
-    
-	// spawn fake player dummy where we were
-	if (activator->client)
+	if (self->spawnflags.has(SPAWNFLAG_CLEARDATA))
 	{
-		edict_t *dummy = self->enemy = G_Spawn();
-		dummy->owner = activator;
-		dummy->clipmask = activator->clipmask;
-		dummy->s.origin = activator->s.origin;
-		dummy->s.angles = activator->s.angles;
-		dummy->groundentity = activator->groundentity;
-		dummy->groundentity_linkcount = dummy->groundentity ? dummy->groundentity->linkcount : 0;
-		dummy->think = target_camera_dummy_think;
-		dummy->nextthink = level.time + 10_hz;
-		dummy->solid = SOLID_BBOX;
-		dummy->movetype = MOVETYPE_STEP;
-		dummy->mins = activator->mins;
-		dummy->maxs = activator->maxs;
-		dummy->s.modelindex = dummy->s.modelindex2 = MODELINDEX_PLAYER;
-		dummy->s.skinnum = activator->s.skinnum;
-		dummy->velocity = activator->velocity;
-		dummy->s.renderfx = RF_MINLIGHT;
-		dummy->s.frame = activator->s.frame;
-		gi.linkentity(dummy);
+		
+		destroyDummies(self);
+		restoreClients(self);
+		clearVectors();
 	}
+
+	level.story_active = true;
+	if (self->healthtarget)
+	{
+		edict_t* t = nullptr;
+
+		while ((t = G_FindByString<&edict_t::targetname>(t, self->healthtarget)))
+		{
+			t->use(t, self, self->activator);
+		}
+	}
+	startTime = level.time;
+
 
     camera_lookat_pathtarget(self, self->s.origin, &level.intermission_angle);
     level.intermission_origin = self->s.origin;
 
     // move all clients to the intermission point
+	std::vector<edict_t*> dummies;
+
     for (uint32_t i = 0; i < game.maxclients; i++)
     {
         edict_t* client = g_edicts + 1 + i;
@@ -1325,11 +1667,22 @@ USE(use_target_camera) (edict_t *self, edict_t *other, edict_t *activator) -> vo
             continue;
         }
 		
-	// respawn any dead clients
-		if (client->health <= 0)
-			respawn(client);
 
-        MoveClientToIntermission(client);
+
+		bool hasClient = false;
+		for (size_t i = 0; i < pClients.size(); i++)
+			if (pClients[i] == client)
+			{
+				hasClient = true;
+				break;
+			}
+		if (!hasClient)
+		{
+			storeClient(self, client);
+			createDummy(self, client);
+			//gi.LocCenter_Print(client, "added player, created dummy");
+		}
+		//else gi.LocCenter_Print(client, "player already exists");
     }
     
     self->activator = activator;
@@ -1807,7 +2160,16 @@ void SP_target_music(edict_t* self)
 
 USE(use_target_healthbar) (edict_t *ent, edict_t *other, edict_t *activator) -> void
 {
-	edict_t *target = G_PickTarget(ent->target);
+
+	edict_t* target = nullptr;
+	while ((target = G_FindByString<&edict_t::targetname>(target, ent->target)))
+	{
+		if ((target->svflags & SVF_MONSTER)) break;
+	}
+
+
+
+
 
 	if (!target || ent->health != target->spawn_count)
 	{
@@ -1836,7 +2198,11 @@ USE(use_target_healthbar) (edict_t *ent, edict_t *other, edict_t *activator) -> 
 
 THINK(check_target_healthbar) (edict_t *ent) -> void
 {
-	edict_t *target = G_PickTarget(ent->target);
+	edict_t* target = nullptr;
+	while ((target = G_FindByString<&edict_t::targetname>(target, ent->target)))
+	{
+		if ((target->svflags & SVF_MONSTER)) break;
+	}
 	if (!target || !(target->svflags & SVF_MONSTER))
 	{
 		if ( target != nullptr ) {

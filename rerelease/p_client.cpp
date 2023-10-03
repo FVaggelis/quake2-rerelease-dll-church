@@ -859,7 +859,7 @@ void InitClientPersistant(edict_t *ent, gclient_t *client)
 			// ROGUE
 
 			if (!g_instagib->integer)
-				client->pers.inventory[IT_WEAPON_BLASTER] = 1;
+				client->pers.inventory[IT_WEAPON_CHAINFIST] = 1;
 
 			// [Kex]
 			// start items!
