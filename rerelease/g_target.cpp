@@ -1279,7 +1279,12 @@ THINK(target_camera_dummy_think) (edict_t* self) -> void
 }
 void storeClient(edict_t* self, edict_t* client)
 {
-	if (client->health <= 0)respawn(client);
+	if (client->health <= 0)
+  {
+    if (P_UseCoopInstancedItems())
+				client->client->pers.health = client->client->pers.max_health = client->max_health;
+    respawn(client);
+  }
 	origins.push_back(client->s.origin);
 	viewAngles.push_back(client->client->ps.viewangles);
 	gunIndexes.push_back(client->client->ps.gunindex);
@@ -1666,7 +1671,6 @@ USE(use_target_camera) (edict_t *self, edict_t *other, edict_t *activator) -> vo
         {
             continue;
         }
-		
 
 
 		bool hasClient = false;
@@ -1959,6 +1963,9 @@ static float distance_to_poi(vec3_t start, vec3_t end)
 	if (gi.GetPathToGoal(request, info))
 		return info.pathDistSqr;
 
+	if (info.returnCode == PathReturnCode::NoNavAvailable)
+		return (end - start).lengthSquared();
+
 	return std::numeric_limits<float>::infinity();
 }
 
@@ -2051,6 +2058,13 @@ USE(target_poi_use) (edict_t *ent, edict_t *other, edict_t *activator) -> void
 				ent = dummy_fallback;
 			else
 				return;
+		}
+
+		// copy over POI stage value
+		if (ent->count)
+		{
+			if (level.current_poi_stage <= ent->count)
+				level.current_poi_stage = ent->count;
 		}
 	}
 	else
