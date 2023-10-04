@@ -13,6 +13,70 @@ INTERMISSION
 
 void DeathmatchScoreboard(edict_t *ent);
 
+void RestoreClientFromIntermission(edict_t* ent)
+{
+	// [Paril-KEX]
+	if (ent->client->ps.pmove.pm_type != PM_NORMAL)
+		ent->s.event = EV_NONE;
+	if (deathmatch->integer)
+		ent->client->showscores = false;
+	ent->s.origin = level.intermission_origin;
+	ent->client->ps.pmove.origin = level.intermission_origin;
+	ent->client->ps.viewangles = level.intermission_angle;
+	ent->client->ps.pmove.pm_type = PM_NORMAL;
+	ent->client->ps.gunindex = 1;
+	ent->client->ps.gunskin = 1;
+	ent->client->ps.damage_blend[3] = ent->client->ps.screen_blend[3] = 0;
+	ent->client->ps.rdflags = RDF_NONE;
+
+	// clean up powerup info
+	ent->client->quad_time = 0_ms;
+	ent->client->invincible_time = 0_ms;
+	ent->client->breather_time = 0_ms;
+	ent->client->enviro_time = 0_ms;
+	ent->client->invisible_time = 0_ms;
+	ent->client->grenade_blew_up = false;
+	ent->client->grenade_time = 0_ms;
+
+	ent->client->showhelp = true;
+	ent->client->showscores = false;
+
+	globals.server_flags &= ~SERVER_FLAGS_NONE;
+
+	// RAFAEL
+	ent->client->quadfire_time = 0_ms;
+	// RAFAEL
+	// ROGUE
+	ent->client->ir_time = 0_ms;
+	ent->client->nuke_time = 0_ms;
+	ent->client->double_time = 0_ms;
+	ent->client->tracker_pain_time = 0_ms;
+	// ROGUE
+
+	ent->viewheight = 0;
+	ent->s.modelindex = 0;
+	ent->s.modelindex2 = 0;
+	ent->s.modelindex3 = 0;
+	ent->s.modelindex = 0;
+	ent->s.effects = EF_NONE;
+	ent->s.sound = 0;
+	ent->solid = SOLID_BSP;
+	ent->movetype = MOVETYPE_WALK;
+
+	gi.linkentity(ent);
+
+	// add the layout
+
+	if (deathmatch->integer)
+	{
+		DeathmatchScoreboard(ent);
+		ent->client->showscores = true;
+	}
+}
+
+
+
+
 void MoveClientToIntermission(edict_t *ent)
 {
 	// [Paril-KEX]
@@ -727,9 +791,9 @@ struct powerup_info_t
 G_SetStats
 ===============
 */
-void G_SetStats(edict_t *ent)
+void G_SetStats(edict_t* ent)
 {
-	gitem_t	*item;
+	gitem_t* item;
 	item_id_t index;
 	int		  cells = 0;
 	item_id_t power_armor_type;
@@ -753,7 +817,7 @@ void G_SetStats(edict_t *ent)
 	{
 		if (ent->client->pers.inventory[invIndex])
 		{
-			weaponbits |= 1 << GetItemByIndex((item_id_t) invIndex)->weapon_wheel_index;
+			weaponbits |= 1 << GetItemByIndex((item_id_t)invIndex)->weapon_wheel_index;
 		}
 	}
 
@@ -781,13 +845,13 @@ void G_SetStats(edict_t *ent)
 			ent->client->ps.stats[STAT_AMMO] = ent->client->pers.inventory[ent->client->pers.weapon->ammo];
 		}
 	}
-	
+
 	memset(&ent->client->ps.stats[STAT_AMMO_INFO_START], 0, sizeof(uint16_t) * NUM_AMMO_STATS);
 	for (unsigned int ammoIndex = AMMO_BULLETS; ammoIndex < AMMO_MAX; ++ammoIndex)
 	{
-		gitem_t *ammo = GetItemByAmmo((ammo_t) ammoIndex);
+		gitem_t* ammo = GetItemByAmmo((ammo_t)ammoIndex);
 		uint16_t val = G_CheckInfiniteAmmo(ammo) ? AMMO_VALUE_INFINITE : clamp(ent->client->pers.inventory[ammo->id], 0, AMMO_VALUE_INFINITE - 1);
-		G_SetAmmoStat((uint16_t *) &ent->client->ps.stats[STAT_AMMO_INFO_START], ammo->ammo_wheel_index, val);
+		G_SetAmmoStat((uint16_t*)&ent->client->ps.stats[STAT_AMMO_INFO_START], ammo->ammo_wheel_index, val);
 	}
 
 	//
@@ -828,7 +892,7 @@ void G_SetStats(edict_t *ent)
 	memset(&ent->client->ps.stats[STAT_POWERUP_INFO_START], 0, sizeof(uint16_t) * NUM_POWERUP_STATS);
 	for (unsigned int powerupIndex = POWERUP_SCREEN; powerupIndex < POWERUP_MAX; ++powerupIndex)
 	{
-		gitem_t *powerup = GetItemByPowerup((powerup_t) powerupIndex);
+		gitem_t* powerup = GetItemByPowerup((powerup_t)powerupIndex);
 		uint16_t val;
 
 		switch (powerup->id)
@@ -855,7 +919,7 @@ void G_SetStats(edict_t *ent)
 			break;
 		}
 
-		G_SetPowerupStat((uint16_t *) &ent->client->ps.stats[STAT_POWERUP_INFO_START], powerup->powerup_wheel_index, val);
+		G_SetPowerupStat((uint16_t*)&ent->client->ps.stats[STAT_POWERUP_INFO_START], powerup->powerup_wheel_index, val);
 	}
 
 	ent->client->ps.stats[STAT_TIMER_ICON] = 0;
@@ -880,12 +944,12 @@ void G_SetStats(edict_t *ent)
 	}
 	else
 	{
-		powerup_info_t *best_powerup = nullptr;
+		powerup_info_t* best_powerup = nullptr;
 
-		for (auto &powerup : powerup_table)
+		for (auto& powerup : powerup_table)
 		{
-			auto *powerup_time = powerup.time_ptr ? &(ent->client->*powerup.time_ptr) : nullptr;
-			auto *powerup_count = powerup.count_ptr ? &(ent->client->*powerup.count_ptr) : nullptr;
+			auto* powerup_time = powerup.time_ptr ? &(ent->client->*powerup.time_ptr) : nullptr;
+			auto* powerup_count = powerup.count_ptr ? &(ent->client->*powerup.count_ptr) : nullptr;
 
 			if (powerup_time && *powerup_time <= level.time)
 				continue;
@@ -897,7 +961,7 @@ void G_SetStats(edict_t *ent)
 				best_powerup = &powerup;
 				continue;
 			}
-			
+
 			if (powerup_time && *powerup_time < ent->client->*best_powerup->time_ptr)
 			{
 				best_powerup = &powerup;
@@ -972,11 +1036,21 @@ void G_SetStats(edict_t *ent)
 		if (level.intermission_eou || level.is_n64 || (deathmatch->integer && level.intermissiontime))
 			ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_INTERMISSION;
 	}
-	
+
 	if (level.story_active)
-		ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_HIDE_CROSSHAIR;
+	{
+	
+	ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_HIDE_CROSSHAIR;
+	ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_HIDE_HUD;
+	//ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_INTERMISSION;
+	
+	}
 	else
+	{ 
 		ent->client->ps.stats[STAT_LAYOUTS] &= ~LAYOUTS_HIDE_CROSSHAIR;
+		ent->client->ps.stats[STAT_LAYOUTS] &= ~LAYOUTS_HIDE_HUD;
+		//ent->client->ps.stats[STAT_LAYOUTS] &= ~LAYOUTS_INTERMISSION;
+	}
 
 	// [Paril-KEX] key display
 	if (!deathmatch->integer)

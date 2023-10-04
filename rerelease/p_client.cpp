@@ -858,8 +858,10 @@ void InitClientPersistant(edict_t *ent, gclient_t *client)
 			client->pers.max_ammo[AMMO_TESLA] = 5;
 			// ROGUE
 
-			if (!deathmatch->integer || !g_instagib->integer)
-				client->pers.inventory[IT_WEAPON_BLASTER] = 1;
+
+			if (!g_instagib->integer)
+				client->pers.inventory[IT_WEAPON_CHAINFIST] = 1;
+
 
 			// [Kex]
 			// start items!
