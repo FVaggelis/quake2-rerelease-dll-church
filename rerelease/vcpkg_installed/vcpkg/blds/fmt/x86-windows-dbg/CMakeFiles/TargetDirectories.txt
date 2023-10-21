@@ -1,0 +1,8 @@
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-dbg/CMakeFiles/fmt.dir
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-dbg/CMakeFiles/package.dir
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-dbg/CMakeFiles/package_source.dir
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-dbg/CMakeFiles/edit_cache.dir
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-dbg/CMakeFiles/rebuild_cache.dir
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-dbg/CMakeFiles/list_install_components.dir
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-dbg/CMakeFiles/install.dir
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-dbg/CMakeFiles/install/local.dir

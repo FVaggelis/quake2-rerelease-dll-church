@@ -1,0 +1,17 @@
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/lib/cmake/jsoncpp/jsoncppConfig.cmake
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/lib/cmake/jsoncpp/jsoncppConfig-release.cmake
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/lib/cmake/jsoncpp/jsoncppConfigVersion.cmake
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/lib/jsoncpp.lib
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/lib/objects-Release/jsoncpp_object/json_reader.cpp.obj
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/lib/objects-Release/jsoncpp_object/json_value.cpp.obj
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/lib/objects-Release/jsoncpp_object/json_writer.cpp.obj
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/include/json/allocator.h
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/include/json/assertions.h
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/include/json/config.h
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/include/json/forwards.h
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/include/json/json.h
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/include/json/json_features.h
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/include/json/reader.h
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/include/json/value.h
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/include/json/version.h
+D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/x64-windows-static/vcpkg/pkgs/jsoncpp_x64-windows-static/include/json/writer.h

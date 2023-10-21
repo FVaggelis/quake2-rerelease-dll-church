@@ -1,0 +1,73 @@
+The target system is: Windows - 10.0.19045 - x86
+The host system is: Windows - 10.0.19045 - AMD64
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: D:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x86/cl.exe 
+Build flags: ;/nologo;/DWIN32;/D_WINDOWS;/W3;/utf-8;/GR;/EHsc;/MP;
+Id flags:  
+
+The output was:
+0
+CMakeCXXCompilerId.cpp
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.exe"
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.obj"
+
+The CXX compiler identification is MSVC, found in "D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-rel/CMakeFiles/3.25.1/CompilerIdCXX/CMakeCXXCompilerId.exe"
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-rel/CMakeFiles/CMakeScratch/TryCompile-f4mamk
+
+Run Build Command(s):D:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_66e6c && [1/2] Building CXX object CMakeFiles\cmTC_66e6c.dir\CMakeCXXCompilerABI.cpp.obj
+[2/2] Linking CXX executable cmTC_66e6c.exe
+
+
+
+Performing C++ SOURCE FILE Test SUPPORTS_USER_DEFINED_LITERALS succeeded with the following output:
+Change Dir: D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-rel/CMakeFiles/CMakeScratch/TryCompile-iip4op
+
+Run Build Command(s):D:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_a3c8e && [1/2] Building CXX object CMakeFiles\cmTC_a3c8e.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_a3c8e.exe
+
+
+Source file was:
+
+  void operator"" _udl(long double);
+  int main() {}
+
+Performing C++ SOURCE FILE Test FMT_HAS_VARIANT succeeded with the following output:
+Change Dir: D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-rel/CMakeFiles/CMakeScratch/TryCompile-8tg3u0
+
+Run Build Command(s):D:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_2dd77 && [1/2] Building CXX object CMakeFiles\cmTC_2dd77.dir\src.cxx.obj
+cl : Command line warning D9002 : ignoring unknown option '-std=c++1z'
+D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.36.32532\include\variant(13): warning STL4038: The contents of <variant> are available only with C++17 or later.
+[2/2] Linking CXX executable cmTC_2dd77.exe
+
+
+Source file was:
+
+  #include <variant>
+  int main() {}
+
+Determining if the _strtod_l exist passed with the following output:
+Change Dir: D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/fmt/x86-windows-rel/CMakeFiles/CMakeScratch/TryCompile-g3wvgf
+
+Run Build Command(s):D:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_53600 && [1/2] Building CXX object CMakeFiles\cmTC_53600.dir\CheckSymbolExists.cxx.obj
+[2/2] Linking CXX executable cmTC_53600.exe
+
+
+File CheckSymbolExists.cxx:
+/* */
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef _strtod_l
+  return ((int*)(&_strtod_l))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}

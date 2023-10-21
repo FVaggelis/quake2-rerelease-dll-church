@@ -551,6 +551,10 @@ USE(use_target_spawner) (edict_t *self, edict_t *other, edict_t *activator) -> v
 	ent->s.origin = self->s.origin;
 	ent->s.angles = self->s.angles;
 	st = {};
+	
+	if (self->pathtarget)ent->target = self->pathtarget;
+	if (self->deathtarget)ent->deathtarget = self->deathtarget;
+	
 
 	// [Paril-KEX] although I fixed these in our maps, this is just
 	// in case anybody else does this by accident. Don't count these monsters
@@ -563,8 +567,14 @@ USE(use_target_spawner) (edict_t *self, edict_t *other, edict_t *activator) -> v
 	KillBox(ent, false);
 	if (self->speed)
 		ent->velocity = self->movedir;
-
+	
 	ent->s.renderfx |= RF_IR_VISIBLE; // PGM
+	if (self->itemtarget)ent->item = FindItemByClassname(self->itemtarget);
+	if (self->healthtarget)
+	{ 
+		float Hmult = std::stof(self->healthtarget);
+		if(Hmult)ent->health = ent->health * Hmult;
+	}
 }
 
 void SP_target_spawner(edict_t *self)
@@ -1116,6 +1126,7 @@ std::vector<gvec3_t> origins;
 std::vector<gvec3_t> viewAngles;
 std::vector<int32_t> gunIndexes;
 gtime_t startTime;
+bool firstRun = false;
 
 void clearVectors()
 {
@@ -1308,7 +1319,16 @@ void moveCamera(edict_t* self, edict_t* client)
 	client->client->ps.pmove.origin = level.intermission_origin;
 	client->client->ps.viewangles = level.intermission_angle;
 	client->client->ps.pmove.pm_type = PM_FREEZE;
-	client->movetype = MOVETYPE_NOCLIP;
+		if (client->movetype == MOVETYPE_NONE )
+		{
+			
+			client->movetype = MOVETYPE_NOCLIP;
+		}
+		else if (client->movetype != MOVETYPE_NOCLIP || firstRun)
+		{
+			firstRun = false;
+			client->movetype = MOVETYPE_NONE;
+		}
 	client->client->ps.gunindex = 0;
 	client->client->ps.gunrate = -1;
 	client->s.modelindex = 0;
@@ -1472,7 +1492,6 @@ THINK(update_target_camera) (edict_t *self) -> void
 				{
 					storeClient(self, client);
 					createDummy(self, client);
-					printTest("it stored again up");
 				}
 				moveCamera(self, client);
 
@@ -1554,6 +1573,7 @@ THINK(update_target_camera) (edict_t *self) -> void
 				if (!self->spawnflags.has(SPAWNFLAG_NORESTORE))
 				{
 					level.story_active = false;
+					firstRun = false;
 					destroyDummies(self);
 					restoreClients(self);
 				}
@@ -1644,7 +1664,7 @@ USE(use_target_camera) (edict_t *self, edict_t *other, edict_t *activator) -> vo
 		restoreClients(self);
 		clearVectors();
 	}
-
+	firstRun = true;
 	level.story_active = true;
 	if (self->healthtarget)
 	{

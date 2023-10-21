@@ -128,7 +128,7 @@ constexpr size_t MAX_OSPATH = 128; // max length of a filesystem pathname
 // per-level limits
 //
 constexpr size_t MAX_CLIENTS = 256; // absolute limit
-constexpr size_t MAX_EDICTS = 8192; // upper limit, due to svc_sound encoding as 15 bits 8192
+constexpr size_t MAX_EDICTS = 8192; // upper limit, due to svc_sound encoding as 15 bits
 constexpr size_t MAX_LIGHTSTYLES = 256;
 constexpr size_t MAX_MODELS = 8192; // these are sent over the net as shorts
 constexpr size_t MAX_SOUNDS = 2048; // so they cannot be blindly increased

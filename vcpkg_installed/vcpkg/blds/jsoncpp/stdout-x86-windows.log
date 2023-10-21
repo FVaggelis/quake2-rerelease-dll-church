@@ -1,0 +1,10 @@
+-- Using cached open-source-parsers-jsoncpp-9059f5cad030ba11d37818847443a53918c327b1.tar.gz.
+-- Cleaning sources at D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/jsoncpp/src/3918c327b1-034a82149a.clean. Use --editable to skip cleaning for the packages you specify.
+-- Extracting source C:/Users/Vaggelis/AppData/Local/vcpkg/downloads/open-source-parsers-jsoncpp-9059f5cad030ba11d37818847443a53918c327b1.tar.gz
+-- Using source at D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/blds/jsoncpp/src/3918c327b1-034a82149a.clean
+-- Found external ninja('1.11.0').
+-- Configuring x86-windows
+-- Building x86-windows-dbg
+-- Building x86-windows-rel
+-- Installing: D:/Steam/steamapps/common/Quake 2/rerelease/baseChurch/src/rerelease/vcpkg_installed/vcpkg/pkgs/jsoncpp_x86-windows/share/jsoncpp/copyright
+-- Performing post-build validation
