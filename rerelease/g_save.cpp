@@ -2600,6 +2600,12 @@ bool G_CanSave()
 	{
 		return false;
 	}
+	else if (level.story_active)
+	{
+		gi.LocClient_Print(&g_edicts[1], PRINT_CENTER, "Can't save during a cinematic.");
+		return false;
+
+	}
 
 	return true;
 }

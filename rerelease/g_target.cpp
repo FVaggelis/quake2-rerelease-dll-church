@@ -1125,8 +1125,10 @@ std::vector<edict_t*> pClients;
 std::vector<gvec3_t> origins;
 std::vector<gvec3_t> viewAngles;
 std::vector<int32_t> gunIndexes;
+std::vector<float> fovs;
 gtime_t startTime;
 bool firstRun = false;
+bool setFog = false;
 
 void clearVectors()
 {
@@ -1151,7 +1153,8 @@ void printTest(std::string base)
 			continue;
 		}
 		//gi.LocCenter_Print(client, std::to_string(client->s.modelindex).c_str());
-		gi.LocCenter_Print(client, combinedString);
+		//gi.LocCenter_Print(client, combinedString);
+		gi.LocClient_Print(client, PRINT_CENTER, combinedString);
 	}
 }
 // Function to calculate the shortest angular difference between two angles
@@ -1192,16 +1195,18 @@ vec3_t slerpCamera(const vec3_t& from, const vec3_t& to, float t)
 	return interpolatedCamera;
 }
 static void camera_turnat_pathtarget(edict_t* self, vec3_t origin, vec3_t* dest)
-{
+{	
+
 	
 	if (self->pathtarget)
 	{
+		
 		edict_t* pt = nullptr;
 		pt = G_FindByString<&edict_t::targetname>(pt, self->pathtarget);
 		if (pt)
 		{
 			vec3_t to;
-			vec3_t delta = pt->s.origin - self->s.origin;
+			vec3_t delta = pt->s.origin - level.intermission_origin;
 
 			float d = delta.dot(delta);
 
@@ -1218,20 +1223,10 @@ static void camera_turnat_pathtarget(edict_t* self, vec3_t origin, vec3_t* dest)
 				to[ROLL] = 0.0f;
 			}
 			
-
-			
-			float lerpspeed = self->speed * 0.0002;
+			float lerpspeed = self->speed * 0.00022;
 			if (lerpspeed > 0.1) lerpspeed = 0.1f;
-			//+ " from P: " + std::to_string((*dest)[PITCH]) + " to P: " + std::to_string(to[PITCH])
-			//printTest("from Y: "+std::to_string((*dest)[YAW])+" to Y: "+std::to_string(to[YAW]));
 
 			(*dest) = slerpCamera((*dest), to, lerpspeed);
-			
-			//(*dest)[YAW] = yaw;
-			///(*dest)[PITCH] = -pitch;
-			//(*dest)[ROLL] = 0;
-
-			// is yaw or is pitch, why is pitch -
 		}
 	}
 }
@@ -1305,7 +1300,9 @@ void storeClient(edict_t* self, edict_t* client)
 	//client->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_HIDE_HUD;
 	//client->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_HIDE_CROSSHAIR;
 
-
+	
+	fovs.push_back(client->client->ps.fov);
+	client->client->ps.fov = float(self->count);
 	pClients.push_back(client);
 	
 	//printTest(std::to_string(self->pClients.size()));
@@ -1315,20 +1312,35 @@ void storeClient(edict_t* self, edict_t* client)
 void moveCamera(edict_t* self, edict_t* client)
 {
 
+	if (firstRun = true)
+	{
+		if (self->fog.density)client->client->pers.wanted_fog[0] = self->fog.density;
+		else client->client->pers.wanted_fog[0] = world->fog.density;
+		if (self->fog.color)
+		{
+			client->client->pers.wanted_fog[1] = self->fog.color[0];
+			client->client->pers.wanted_fog[2] = self->fog.color[1];
+			client->client->pers.wanted_fog[3] = self->fog.color[2];
+		}
+		else
+		{
+			client->client->pers.wanted_fog[1] = world->fog.color[0];
+			client->client->pers.wanted_fog[2] = world->fog.color[1];
+			client->client->pers.wanted_fog[3] = world->fog.color[2];
+		}
+		if (self->fog.sky_factor)client->client->pers.wanted_fog[4] = self->fog.sky_factor;
+		else client->client->pers.wanted_fog[4] = world->fog.sky_factor;
+
+		client->client->pers.bob_skip = true;
+
+		firstRun = false;
+	}
+	
 	client->s.origin = level.intermission_origin;
 	client->client->ps.pmove.origin = level.intermission_origin;
 	client->client->ps.viewangles = level.intermission_angle;
 	client->client->ps.pmove.pm_type = PM_FREEZE;
-		if (client->movetype == MOVETYPE_NONE )
-		{
-			
-			client->movetype = MOVETYPE_NOCLIP;
-		}
-		else if (client->movetype != MOVETYPE_NOCLIP || firstRun)
-		{
-			firstRun = false;
-			client->movetype = MOVETYPE_NONE;
-		}
+	client->movetype = MOVETYPE_NOCLIP;
 	client->client->ps.gunindex = 0;
 	client->client->ps.gunrate = -1;
 	client->s.modelindex = 0;
@@ -1336,6 +1348,16 @@ void moveCamera(edict_t* self, edict_t* client)
 	client->viewheight = 0;
 	client->client->showinventory = false;
 	client->client->showhelp = false;
+	if (self->count)
+	{
+		
+		client->client->ps.fov = float(self->count);
+	}
+	else client->client->ps.fov = 100;
+		
+
+
+
 }
 void restoreClients(edict_t* self)
 {
@@ -1349,6 +1371,7 @@ void restoreClients(edict_t* self)
 		client->s.origin = origins[i];
 		client->client->ps.pmove.origin = origins[i];
 		client->client->ps.viewangles = viewAngles[i];
+		client->client->ps.fov = fovs[i];
 		client->client->ps.pmove.pm_type = PM_NORMAL;
 		client->movetype = MOVETYPE_WALK;
 		client->client->ps.gunindex = gunIndexes[i];
@@ -1360,7 +1383,13 @@ void restoreClients(edict_t* self)
 		//client->client->ps.stats[STAT_LAYOUTS] &= ~LAYOUTS_HIDE_HUD;
 		//->client->ps.stats[STAT_LAYOUTS] &= ~LAYOUTS_HIDE_CROSSHAIR;
 
-	
+		client->client->pers.bob_skip = false;
+		client->client->pers.wanted_fog[0] = world->fog.density;
+		client->client->pers.wanted_fog[1] = world->fog.color[0];
+		client->client->pers.wanted_fog[2] = world->fog.color[1];
+		client->client->pers.wanted_fog[3] = world->fog.color[2];
+		client->client->pers.wanted_fog[4] = world->fog.sky_factor;
+
 
 	}
 }
@@ -1426,18 +1455,6 @@ THINK(update_target_camera) (edict_t *self) -> void
 
 		if (self->moveinfo.remaining_distance <= 0)
 		{
-			/*if (self->movetarget->hackflags & HACKFLAG_TELEPORT_OUT)
-			{
-				if (self->enemy)
-				{
-					self->enemy->s.event = EV_PLAYER_TELEPORT;
-					self->enemy->hackflags = HACKFLAG_TELEPORT_OUT;
-					self->enemy->pain_debounce_time = self->enemy->timestamp = gtime_t::from_sec(self->movetarget->wait);
-				}
-			}*/
-			
-			
-			
 			if (self->movetarget->pathtarget)
 			{
 				edict_t* temp = G_PickTarget(self->movetarget->pathtarget);
@@ -1453,25 +1470,16 @@ THINK(update_target_camera) (edict_t *self) -> void
 
 				if (self->movetarget)
 				{	
-					
-
-
 
 					self->moveinfo.move_speed = self->movetarget->speed ? self->movetarget->speed : self->speed;
 					self->moveinfo.remaining_distance = (self->movetarget->s.origin - self->s.origin).normalize();
 					self->moveinfo.distance = self->moveinfo.remaining_distance;
 
-
-	
-
-
 				}
 			}
 			else
 			{ 
-				
 				self->movetarget = nullptr;
-			
 			}
 			
 			for (uint32_t i = 0; i < game.maxclients; i++)
@@ -1516,8 +1524,8 @@ THINK(update_target_camera) (edict_t *self) -> void
 				vec3_t delta = self->movetarget->s.origin - self->s.origin;
 				delta *= frac;
 				vec3_t newpos = self->s.origin + delta;
-
-				camera_turnat_pathtarget(self, newpos, &level.intermission_angle);
+				
+				camera_turnat_pathtarget(self, level.intermission_origin, &level.intermission_angle);
 				level.intermission_origin = newpos;
 			}
 
@@ -1666,6 +1674,9 @@ USE(use_target_camera) (edict_t *self, edict_t *other, edict_t *activator) -> vo
 	}
 	firstRun = true;
 	level.story_active = true;
+
+	if (self->message)printTest(self->message);
+
 	if (self->healthtarget)
 	{
 		edict_t* t = nullptr;
@@ -1675,6 +1686,17 @@ USE(use_target_camera) (edict_t *self, edict_t *other, edict_t *activator) -> vo
 			t->use(t, self, self->activator);
 		}
 	}
+
+		//world->fog.density,
+		//world->fog.color[0],
+		//world->fog.color[1],
+		//world->fog.color[2],
+		//world->fog.sky_factor
+
+
+
+
+
 	startTime = level.time;
 
 

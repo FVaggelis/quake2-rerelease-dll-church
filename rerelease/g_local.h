@@ -7,7 +7,7 @@
 #include "bg_local.h"
 
 // the "gameversion" client command will print this plus compile date
-constexpr const char *GAMEVERSION = "baseq2";
+constexpr const char *GAMEVERSION = "baseChurch";
 
 //==================================================================
 
